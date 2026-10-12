@@ -32,7 +32,7 @@
 
 ### 💻 Frontend
 
-🔗 **[SupportDesk — Live Application](https://ticking-system-frontend-d82402zcj-saksham706s-projects.vercel.app/)**
+🔗 **[SupportDesk — Live Application](https://ticking-system-frontend.vercel.app)**
 
 ### ⚙️ Backend API
 
