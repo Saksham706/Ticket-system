@@ -1,0 +1,215 @@
+openapi: 3.0.3
+info:
+  title: MERN Internship Ticketing System API
+  version: 1.0.0
+  description: REST API for authentication, users, tickets, conversations, categories, notifications, attachments and email event monitoring.
+servers:
+  - url: http://localhost:5000/api
+    description: Local development
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ApiError:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        statusCode: { type: integer, example: 400 }
+        message: { type: string, example: Validation failed }
+        requestId: { type: string }
+    Ticket:
+      type: object
+      properties:
+        _id: { type: string }
+        ticketNumber: { type: string, example: TKT-2026-000001 }
+        title: { type: string }
+        description: { type: string }
+        status: { type: string, enum: [open, in_progress, pending, resolved, closed] }
+        priority: { type: string, enum: [low, medium, high, urgent] }
+        requester: { type: string }
+        assignedAgent: { type: string, nullable: true }
+        category: { type: string }
+paths:
+  /health:
+    get:
+      security: []
+      summary: Health check
+      responses:
+        '200': { description: API is healthy }
+  /auth/register:
+    post:
+      security: []
+      summary: Register a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fullName, email, phone, password]
+              properties:
+                fullName: { type: string }
+                email: { type: string, format: email }
+                phone: { type: string }
+                password: { type: string, minLength: 8 }
+                role: { type: string, enum: [customer, agent, admin], default: customer }
+      responses:
+        '201': { description: Account created }
+        '400': { description: Invalid input }
+        '409': { description: Email or phone already registered }
+  /auth/verify-otp:
+    post:
+      security: []
+      summary: Verify an email OTP
+      responses:
+        '200': { description: OTP verified }
+        '400': { description: Invalid or expired OTP }
+  /auth/login-password:
+    post:
+      security: []
+      summary: Login with email and password
+      responses:
+        '200': { description: Authenticated }
+        '401': { description: Invalid credentials }
+  /auth/forgot-password:
+    post:
+      security: []
+      summary: Request password-reset OTP by email
+      responses:
+        '200': { description: Request accepted }
+  /auth/reset-password:
+    post:
+      security: []
+      summary: Reset password after OTP verification
+      responses:
+        '200': { description: Password reset }
+  /tickets:
+    get:
+      summary: List tickets visible to the current user
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - in: query
+          name: status
+          schema: { type: string, enum: [open, in_progress, pending, resolved, closed] }
+      responses:
+        '200': { description: Paginated tickets }
+        '401': { description: Authentication required }
+    post:
+      summary: Create a ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, description, category]
+              properties:
+                title: { type: string, minLength: 3, maxLength: 200 }
+                description: { type: string, minLength: 5, maxLength: 10000 }
+                category: { type: string }
+                priority: { type: string, enum: [low, medium, high, urgent] }
+      responses:
+        '201': { description: Ticket created }
+        '400': { description: Invalid input }
+  /tickets/{ticketId}:
+    parameters:
+      - in: path
+        name: ticketId
+        required: true
+        schema: { type: string }
+    get:
+      summary: Get ticket details
+      responses:
+        '200': { description: Ticket details }
+        '403': { description: Not permitted }
+        '404': { description: Ticket not found }
+    patch:
+      summary: Update ticket details
+      responses:
+        '200': { description: Ticket updated }
+  /tickets/{ticketId}/messages:
+    parameters:
+      - in: path
+        name: ticketId
+        required: true
+        schema: { type: string }
+    get:
+      summary: List ticket conversation messages
+      responses:
+        '200': { description: Conversation messages }
+    post:
+      summary: Add a public reply or permitted internal note
+      responses:
+        '201': { description: Message created }
+  /tickets/{ticketId}/assign:
+    post:
+      summary: Assign a ticket to an agent
+      parameters:
+        - in: path
+          name: ticketId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Ticket assigned }
+        '403': { description: Support role required }
+  /tickets/{ticketId}/resolve:
+    post:
+      summary: Resolve a ticket
+      parameters:
+        - in: path
+          name: ticketId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Ticket resolved }
+  /tickets/{ticketId}/reopen:
+    post:
+      summary: Reopen a ticket
+      parameters:
+        - in: path
+          name: ticketId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Ticket reopened }
+  /tickets/{ticketId}/close:
+    post:
+      summary: Close a ticket
+      parameters:
+        - in: path
+          name: ticketId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Ticket closed }
+  /categories:
+    get:
+      summary: List active categories
+      responses:
+        '200': { description: Categories returned }
+  /dashboard:
+    get:
+      summary: Dashboard statistics
+      responses:
+        '200': { description: Dashboard summary }
+  /notifications:
+    get:
+      summary: List current user's notifications
+      responses:
+        '200': { description: Notifications returned }
+  /email/events:
+    get:
+      summary: List email events (admin only)
+      responses:
+        '200': { description: Email event history }
+        '403': { description: Administrator role required }

@@ -1,0 +1,15 @@
+const TICKET_STATUS = Object.freeze({
+  OPEN: "OPEN",
+
+  PENDING: "PENDING",
+
+  IN_PROGRESS: "IN_PROGRESS",
+
+  RESOLVED: "RESOLVED",
+
+  CLOSED: "CLOSED",
+
+  REOPENED: "REOPENED",
+});
+
+module.exports = TICKET_STATUS;
